@@ -1,0 +1,53 @@
+server:
+  port: 8080
+
+
+jwt:
+  secret: VmYq3t6w9z$C&F)J@NcRfUjXn2r5u7x!A%D*G-KaPdSgVkYp3s6v9y/B?E(H+MbQ
+
+
+spring:
+  # === 데이터베이스 설정 ===
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/nadamspace?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    username: root
+    password: 1234
+
+  # === JPA (Hibernate) 설정 ===
+  jpa:
+    # OSIV(Open Session In View)는 false로 설정하는 것을 강력히 권장합니다.
+    open-in-view: false
+    hibernate:
+      # 개발 단계에 따라 'create' 또는 'update'를 유연하게 사용하세요.
+      ddl-auto: update
+    properties:
+      hibernate:
+        # DB 버전에 맞는 Dialect를 명시적으로 지정해주는 것이 안전합니다.
+        dialect: org.hibernate.dialect.MySQLDialect
+        # 아래는 개발 편의성과 성능을 위한 추천 옵션입니다.
+        show_sql: true
+        format_sql: true
+        use_sql_comments: true
+        default_batch_fetch_size: 1000
+  # === 카카오 소셜 로그인 설정 ===
+#  security:
+#    oauth2:
+#      client:
+#        registration:
+#          kakao:
+#            client-id: your_kakao_rest_api_key # 카카오 개발자 사이트에서 발급받은 REST API 키
+#            client-secret: your_kakao_client_secret # Client Secret (필요 시)
+#            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+#            authorization-grant-type: authorization_code
+#            client-authentication-method: client_secret_post
+#            scope:
+#              - profile_nickname
+#              - profile_image
+#              - account_email
+#        provider:
+#          kakao:
+#            authorization-uri: https://kauth.kakao.com/oauth/authorize
+#            token-uri: https://kauth.kakao.com/oauth/token
+#            user-info-uri: https://kapi.kakao.com/v2/user/me
+#            user-name-attribute: id
