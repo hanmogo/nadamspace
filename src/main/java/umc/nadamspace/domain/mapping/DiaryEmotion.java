@@ -1,0 +1,22 @@
+package umc.nadamspace.domain.mapping;
+
+import jakarta.persistence.*;
+import umc.nadamspace.domain.Diary;
+import umc.nadamspace.domain.Emotion;
+
+@Entity
+public class DiaryEmotion {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "emotion_id")
+    private Emotion emotion;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "diary_id")
+    private Diary diary;
+
+}
