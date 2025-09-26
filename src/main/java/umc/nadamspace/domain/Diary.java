@@ -2,6 +2,7 @@ package umc.nadamspace.domain;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import umc.nadamspace.domain.common.BaseEntity;
@@ -43,6 +44,15 @@ public class Diary extends BaseEntity {
 
     @OneToMany(mappedBy = "diary", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DiaryTag> diaryTags = new ArrayList<>();
+
+    @Builder
+    public Diary(String title, String body, DiaryType diaryType, User user) {
+        this.title = title;
+        this.body = body;
+        this.diaryType = diaryType;
+        this.user = user;
+
+    }
 
 
     //연관관계 편의 메서드
