@@ -34,6 +34,8 @@ public class Diary extends BaseEntity {
     @Column(nullable = false)
     private DiaryType diaryType;
 
+    @OneToMany(mappedBy = "diary", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Photo> photos = new ArrayList<>();
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
@@ -45,6 +47,13 @@ public class Diary extends BaseEntity {
     @OneToMany(mappedBy = "diary", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<DiaryTag> diaryTags = new ArrayList<>();
 
+    @OneToMany(mappedBy = "diary")
+    private List<Answer> answers = new ArrayList<>();
+
+    @OneToOne(mappedBy = "diary", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private DiaryAnalysis analysis;
+
+
     @Builder
     public Diary(String title, String body, DiaryType diaryType, User user) {
         this.title = title;
@@ -55,6 +64,12 @@ public class Diary extends BaseEntity {
     }
 
 
+    //비즈니스 로직 메서드
+    public void update(String title, String body){
+        this.title = title;
+        this.body = body;
+    }
+
     //연관관계 편의 메서드
     public void addDiaryEmotion(DiaryEmotion diaryEmotion) {
         diaryEmotions.add(diaryEmotion);
@@ -62,5 +77,9 @@ public class Diary extends BaseEntity {
 
     public void addDiaryTag(DiaryTag diaryTag) {
         diaryTags.add(diaryTag);
+    }
+
+    public void setAnalysis(DiaryAnalysis analysis) {
+        this.analysis = analysis;
     }
 }
