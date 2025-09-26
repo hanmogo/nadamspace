@@ -2,12 +2,14 @@ package umc.nadamspace.domain.mapping;
 
 import jakarta.persistence.*;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import umc.nadamspace.domain.Diary;
 import umc.nadamspace.domain.Emotion;
 
 @Entity
 @NoArgsConstructor
+@Getter
 public class DiaryEmotion {
 
     @Id

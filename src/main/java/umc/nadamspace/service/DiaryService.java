@@ -9,9 +9,11 @@ import umc.nadamspace.domain.enums.DiaryType;
 import umc.nadamspace.domain.mapping.DiaryEmotion;
 import umc.nadamspace.domain.mapping.DiaryTag;
 import umc.nadamspace.dto.DiaryRequestDTO;
+import umc.nadamspace.dto.DiaryResponseDTO;
 import umc.nadamspace.repository.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -81,4 +83,95 @@ public class DiaryService {
         return newDiary.getId();
     }
 
+
+    public List<DiaryResponseDTO.DiaryPreviewDTO> getDiaryList(Long userId) {
+
+        // Repository를 통해 특정 사용자의 모든 일기를 최신순으로 조회
+        List<Diary> diaryList = diaryRepository.findAllByUserIdOrderByCreatedAtDesc(userId);
+
+        // 조회된 Diary 엔티티 목록을 DTO 목록으로 변환
+        return diaryList.stream()
+                .map(DiaryResponseDTO.DiaryPreviewDTO::from) // Stream의 map과 DTO의 from 메서드 활용
+                .collect(Collectors.toList());
+    }
+
+    public DiaryResponseDTO.DiaryDetailDTO getDiaryDetail(Long diaryId) {
+
+        Diary diary = diaryRepository.findByIdWithDetails(diaryId)
+                .orElseThrow(() -> new IllegalArgumentException("해당하는 일기를 찾을 수 없습니다."));
+        //조회된 Diary 엔티티 DTO로 변경
+        return  DiaryResponseDTO.DiaryDetailDTO.from(diary);
+    }
+
+
+    public void updateDiary(Long userId, Long diaryId, DiaryRequestDTO.UpdateDTO request) {
+        // 1. 수정할 일기를 DB에서 조회
+        Diary diary = diaryRepository.findByIdWithDetails(diaryId) // 기존 Fetch Join 쿼리 재활용
+                .orElseThrow(() -> new IllegalArgumentException("해당하는 일기를 찾을 수 없습니다."));
+
+        // 2.현재 로그인한 사용자가 이 일기의 작성자가 맞는지 권한 확인
+        if (!diary.getUser().getId().equals(userId)) {
+            throw new SecurityException("일기를 수정할 권한이 없습니다.");
+        }
+
+        // 3. Entity 내부의 메서드를 통해 제목, 본문 등 기본 정보 업데이트
+        diary.update(request.getTitle(), request.getBody());
+
+        // 4. 연관관계 데이터감정, 태그, 사진 업데이트
+        // 가장 간단한 방법은 기존 연관 데이터를 모두 지우고, 요청받은 데이터로 새로 추가하는 것입니다.
+        updateDiaryEmotions(diary, request.getEmotionIds());
+        updateDiaryTags(diary, request.getTagNames());
+        updatePhotos(diary, request.getPhotoUrls());
+
+    }
+
+    // --- 아래는 updateDiary 메서드 내부에서 사용할 private 헬퍼 메서드들 ---
+
+    private void updateDiaryEmotions(Diary diary, List<Long> emotionIds) {
+        diary.getDiaryEmotions().clear(); // orphanRemoval=true 옵션 덕분에 DB에서도 삭제됨
+        if (emotionIds != null) {
+            List<Emotion> emotions = emotionRepository.findAllById(emotionIds);
+            for (Emotion emotion : emotions) {
+                DiaryEmotion diaryEmotion = DiaryEmotion.builder().diary(diary).emotion(emotion).build();
+                diary.addDiaryEmotion(diaryEmotion);
+            }
+        }
+    }
+
+    private void updateDiaryTags(Diary diary, List<String> tagNames) {
+        diary.getDiaryTags().clear(); // orphanRemoval=true 옵션 덕분에 DB에서도 삭제됨
+        if (tagNames != null) {
+            for (String tagName : tagNames) {
+                Tag tag = tagRepository.findByName(tagName)
+                        .orElseGet(() -> tagRepository.save(Tag.builder().name(tagName).build()));
+                DiaryTag diaryTag = DiaryTag.builder().diary(diary).tag(tag).build();
+                diary.addDiaryTag(diaryTag);
+            }
+        }
+    }
+
+    private void updatePhotos(Diary diary, List<String> photoUrls) {
+
+        photoRepository.deleteAllByDiary(diary); // Photo는 Diary에 종속되므로 직접 삭제 쿼리 실행
+        if (photoUrls != null) {
+            for (String photoUrl : photoUrls) {
+                Photo newPhoto = Photo.builder().diary(diary).photoUrl(photoUrl).build();
+                photoRepository.save(newPhoto);
+            }
+        }
+    }
+
+    public void deleteDiary(Long userId, Long diaryId) {
+        // 1. 삭제할 일기를 DB에서 조회
+        Diary diary = diaryRepository.findById(diaryId)
+                .orElseThrow(() -> new IllegalArgumentException("해당하는 일기를 찾을 수 없습니다."));
+
+        // 2. (중요) 현재 로그인한 사용자가 이 일기의 작성자가 맞는지 권한 확인
+        if (!diary.getUser().getId().equals(userId)) {
+            throw new SecurityException("일기를 삭제할 권한이 없습니다.");
+        }
+
+        // 3. 일기 삭제
+        diaryRepository.delete(diary);
+    }
 }

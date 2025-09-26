@@ -14,4 +14,13 @@ public class DiaryRequestDTO {
         private List<String> photoUrls;
         private List<String> tagNames;
     }
+
+    @Getter
+    public static class UpdateDTO {
+        private String title;
+        private String body;
+        private List<Long> emotionIds;
+        private List<String> photoUrls;
+        private List<String> tagNames;
+    }
 }
