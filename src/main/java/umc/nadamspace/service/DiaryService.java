@@ -6,12 +6,17 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import umc.nadamspace.domain.*;
 import umc.nadamspace.domain.enums.DiaryType;
+import umc.nadamspace.domain.mapping.AnswerKeyword;
 import umc.nadamspace.domain.mapping.DiaryEmotion;
 import umc.nadamspace.domain.mapping.DiaryTag;
+import umc.nadamspace.dto.CalendarDTO;
 import umc.nadamspace.dto.DiaryRequestDTO;
 import umc.nadamspace.dto.DiaryResponseDTO;
 import umc.nadamspace.repository.*;
 
+import java.time.LocalDate;
+import java.time.YearMonth;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -25,6 +30,9 @@ public class DiaryService {
     private final EmotionRepository emotionRepository;
     private final TagRepository tagRepository;
     private final PhotoRepository photoRepository;
+    private final QuestionRepository questionRepository;
+    private final AnswerRepository answerRepository;
+    private final KeywordRepository keywordRepository;
 
     public Long createFreestyleDiary(Long userId, DiaryRequestDTO.CreateFreestyleDTO request) {
         // 1. 작성자 찾기
@@ -118,7 +126,6 @@ public class DiaryService {
         diary.update(request.getTitle(), request.getBody());
 
         // 4. 연관관계 데이터감정, 태그, 사진 업데이트
-        // 가장 간단한 방법은 기존 연관 데이터를 모두 지우고, 요청받은 데이터로 새로 추가하는 것입니다.
         updateDiaryEmotions(diary, request.getEmotionIds());
         updateDiaryTags(diary, request.getTagNames());
         updatePhotos(diary, request.getPhotoUrls());
@@ -166,12 +173,81 @@ public class DiaryService {
         Diary diary = diaryRepository.findById(diaryId)
                 .orElseThrow(() -> new IllegalArgumentException("해당하는 일기를 찾을 수 없습니다."));
 
-        // 2. (중요) 현재 로그인한 사용자가 이 일기의 작성자가 맞는지 권한 확인
+        // 2. 현재 로그인한 사용자가 이 일기의 작성자가 맞는지 권한 확인
         if (!diary.getUser().getId().equals(userId)) {
             throw new SecurityException("일기를 삭제할 권한이 없습니다.");
         }
 
         // 3. 일기 삭제
         diaryRepository.delete(diary);
+    }
+
+    public List<CalendarDTO> getCalendarInfo(Long userId, int year, int month) {
+        YearMonth yearMonth = YearMonth.of(year, month);
+        LocalDate startDate = yearMonth.atDay(1);
+        LocalDate endDate = yearMonth.atEndOfMonth();
+
+        List<Diary> monthlyDiaries = diaryRepository.findDiariesForCalendar(userId, startDate.atStartOfDay(), endDate.plusDays(1).atStartOfDay());
+
+        return monthlyDiaries.stream()
+                .collect(Collectors.groupingBy(
+                        diary -> diary.getCreatedAt().toLocalDate(),
+                        Collectors.minBy(Comparator.comparing(Diary::getCreatedAt))
+                ))
+                .values().stream()
+                .map(optionalDiary -> optionalDiary.get())
+                .filter(diary -> !diary.getDiaryEmotions().isEmpty()) // 감정이 비어있지 않은 일기만 필터링
+                .map(diary -> {
+                    //diary 객체는 무조건 감정을 하나 이상 가지고 있음
+                    String color = diary.getDiaryEmotions().get(0).getEmotion().getColor();
+                    return new CalendarDTO(diary.getCreatedAt().toLocalDate(), color);
+                })
+                .collect(Collectors.toList());
+    }
+
+
+    //Guideform
+    public Long createGuideformDiary(Long userId, DiaryRequestDTO.CreateGuideformDTO request) {
+        // 1. 사용자 조회
+        User writer = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("해당하는 사용자를 찾을 수 없습니다."));
+
+        // 2. 부모 엔티티인 Diary (GUIDEFORM 타입) 생성 및 저장 -> diary_id 확보
+        Diary newDiary = Diary.builder()
+                .user(writer)
+                .diaryType(DiaryType.GUIDEFORM)
+                .build();
+        diaryRepository.save(newDiary);
+
+        // 3. 전달받은 답변 목록(answers)을 순회하며 Answer 엔티티 생성 및 저장
+        for (DiaryRequestDTO.AnswerDTO answerDto : request.getAnswers()) {
+            Question question = questionRepository.findById(answerDto.getQuestionId())
+                    .orElseThrow(() -> new IllegalArgumentException("해당하는 질문을 찾을 수 없습니다."));
+
+            // 3-1. Answer 엔티티 생성
+            Answer newAnswer = Answer.builder()
+                    .diary(newDiary)
+                    .question(question)
+                    .answerBody(answerDto.getAnswerBody())
+                    .build();
+
+            // 3-2. 키워드 답변(keywordIds)이 있다면, AnswerKeyword 연결
+            if (answerDto.getKeywordIds() != null && !answerDto.getKeywordIds().isEmpty()) {
+                List<Keyword> keywords = keywordRepository.findAllById(answerDto.getKeywordIds());
+                for (Keyword keyword : keywords) {
+                    AnswerKeyword answerKeyword = AnswerKeyword.builder()
+                            .answer(newAnswer)
+                            .keyword(keyword)
+                            .build();
+                    // 연관관계 편의 메서드로 Answer의 키워드 리스트에 추가
+                    newAnswer.addAnswerKeyword(answerKeyword);
+                }
+            }
+
+            // 3-3. Answer 저장 (Answer의 answerKeywords 리스트에 cascade=ALL이 설정되어 있으므로 AnswerKeyword도 함께 저장됨)
+            answerRepository.save(newAnswer);
+        }
+
+        return newDiary.getId();
     }
 }

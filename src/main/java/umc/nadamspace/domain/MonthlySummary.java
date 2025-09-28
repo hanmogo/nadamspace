@@ -23,7 +23,7 @@ public class MonthlySummary extends BaseEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    // 요약 대상 년월 ( "2025-09")
+    // 요약 대상 년월 (ex : "2025-09")
     @Column(nullable = false, length = 7)
     private String yearMonth;
 
@@ -45,6 +45,14 @@ public class MonthlySummary extends BaseEntity {
     public MonthlySummary(User user, String yearMonth, Integer diaryCount, String emotionStats, Tag mostFrequentTag) {
         this.user = user;
         this.yearMonth = yearMonth;
+        this.diaryCount = diaryCount;
+        this.emotionStats = emotionStats;
+        this.mostFrequentTag = mostFrequentTag;
+    }
+
+
+    // 통계 데이터를 업데이트하는 비즈니스 메서드
+    public void updateStats(Integer diaryCount, String emotionStats, Tag mostFrequentTag) {
         this.diaryCount = diaryCount;
         this.emotionStats = emotionStats;
         this.mostFrequentTag = mostFrequentTag;
