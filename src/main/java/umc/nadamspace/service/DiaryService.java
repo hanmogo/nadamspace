@@ -10,12 +10,14 @@ import umc.nadamspace.domain.mapping.AnswerKeyword;
 import umc.nadamspace.domain.mapping.DiaryEmotion;
 import umc.nadamspace.domain.mapping.DiaryTag;
 import umc.nadamspace.dto.CalendarDTO;
+import umc.nadamspace.dto.DiaryAnalysisResponseDTO;
 import umc.nadamspace.dto.DiaryRequestDTO;
 import umc.nadamspace.dto.DiaryResponseDTO;
 import umc.nadamspace.repository.*;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -33,6 +35,8 @@ public class DiaryService {
     private final QuestionRepository questionRepository;
     private final AnswerRepository answerRepository;
     private final KeywordRepository keywordRepository;
+    private final DiaryAnalysisRepository diaryAnalysisRepository;
+
 
     public Long createFreestyleDiary(Long userId, DiaryRequestDTO.CreateFreestyleDTO request) {
         // 1. 작성자 찾기
@@ -220,18 +224,18 @@ public class DiaryService {
         diaryRepository.save(newDiary);
 
         // 3. 전달받은 답변 목록(answers)을 순회하며 Answer 엔티티 생성 및 저장
+        List<Answer> savedAnswers = new ArrayList<>(); // 1. 결과를 담을 빈 리스트 생성
+
         for (DiaryRequestDTO.AnswerDTO answerDto : request.getAnswers()) {
             Question question = questionRepository.findById(answerDto.getQuestionId())
                     .orElseThrow(() -> new IllegalArgumentException("해당하는 질문을 찾을 수 없습니다."));
 
-            // 3-1. Answer 엔티티 생성
             Answer newAnswer = Answer.builder()
                     .diary(newDiary)
                     .question(question)
                     .answerBody(answerDto.getAnswerBody())
                     .build();
 
-            // 3-2. 키워드 답변(keywordIds)이 있다면, AnswerKeyword 연결
             if (answerDto.getKeywordIds() != null && !answerDto.getKeywordIds().isEmpty()) {
                 List<Keyword> keywords = keywordRepository.findAllById(answerDto.getKeywordIds());
                 for (Keyword keyword : keywords) {
@@ -239,15 +243,66 @@ public class DiaryService {
                             .answer(newAnswer)
                             .keyword(keyword)
                             .build();
-                    // 연관관계 편의 메서드로 Answer의 키워드 리스트에 추가
+
                     newAnswer.addAnswerKeyword(answerKeyword);
                 }
             }
 
-            // 3-3. Answer 저장 (Answer의 answerKeywords 리스트에 cascade=ALL이 설정되어 있으므로 AnswerKeyword도 함께 저장됨)
-            answerRepository.save(newAnswer);
+            // 2. Answer를 저장하고, DB에 저장되어 ID가 부여된 객체를 리스트에 추가
+            savedAnswers.add(answerRepository.save(newAnswer));
         }
+        // 4. 저장된 답변들을 바탕으로 분석 데이터 생성
+        createAndSaveAnalysis(newDiary, savedAnswers); // savedAnswers는 저장된 Answer 엔티티 목록
 
         return newDiary.getId();
+    }
+
+    private void createAndSaveAnalysis(Diary diary, List<Answer> answers) {
+        // 4-1. AI 코멘트 생성 (외부 LLM API 호출)
+        // 실제로는 answers를 프롬프트로 가공하여 API 호출
+        String aiComment = generateAiComment(answers);
+
+        // 4-2. 인지 왜곡 패턴 분석
+        // answers에서 키워드 답변을 찾아, 미리 정의된 로직에 따라 상위 2개 패턴 ID 결정
+        CognitiveDistortion distortion1 = findTopCognitiveDistortion(answers);
+        CognitiveDistortion distortion2 = findSecondCognitiveDistortion(answers);
+
+        // 4-3. DiaryAnalysis 엔티티 생성 및 저장
+        DiaryAnalysis analysis = DiaryAnalysis.builder()
+                .diary(diary)
+                .aiComment(aiComment)
+                .suggestedDistortion1(distortion1)
+                .suggestedDistortion2(distortion2)
+                .build();
+
+        diaryAnalysisRepository.save(analysis);
+    }
+
+    // 외부 LLM(GPT, Gemini 등) API를 호출하는 가상 메서드
+    private String generateAiComment(List<Answer> answers) {
+        // Spring의 WebClient나 RestTemplate을 사용하여 외부 API 호출
+        // 1. answers 목록을 하나의 완성된 텍스트 프롬프트로 만듭니다.
+        // 2. LLM API에 프롬프트를 보내고 응답을 받습니다.
+        // 3. 받은 응답을 반환합니다.
+        return "AI가 생성한 따뜻한 코멘트입니다."; // 임시 반환값
+    }
+
+    // 인지 왜곡 패턴을 찾는 가상 메서드
+    private CognitiveDistortion findTopCognitiveDistortion(List<Answer> answers) {
+        // 1. answers에서 키워드를 선택한 답변을 찾습니다.
+        // 2. 선택된 Keyword ID들을 바탕으로 가장 많이 나타난 인지 왜곡 패턴을 분석합니다.
+        // 3. CognitiveDistortion 엔티티를 반환합니다.
+        return null; // 임시 반환값
+    }
+
+    private CognitiveDistortion findSecondCognitiveDistortion(List<Answer> answers) {
+        //두번째 인지 왜곡 패턴 분석
+        return null;
+    }
+
+    public DiaryAnalysisResponseDTO getDiaryAnalysis(Long diaryId) {
+        DiaryAnalysis analysis = diaryAnalysisRepository.findByDiaryId(diaryId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 일기에 대한 분석 결과를 찾을 수 없습니다."));
+        return DiaryAnalysisResponseDTO.from(analysis);
     }
 }

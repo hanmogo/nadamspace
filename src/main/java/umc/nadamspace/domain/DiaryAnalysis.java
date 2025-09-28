@@ -26,9 +26,19 @@ public class DiaryAnalysis extends BaseEntity{
     @JoinColumn(name = "diary_id")
     private Diary diary;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "suggested_distortion_id_1")
+    private CognitiveDistortion suggestedDistortion1;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "suggested_distortion_id_2")
+    private CognitiveDistortion suggestedDistortion2;
+
     @Builder
-    public DiaryAnalysis(Diary diary, String aiComment) {
+    public DiaryAnalysis(Diary diary, String aiComment, CognitiveDistortion suggestedDistortion1, CognitiveDistortion suggestedDistortion2) {
         this.diary = diary;
         this.aiComment = aiComment;
+        this.suggestedDistortion1 = suggestedDistortion1;
+        this.suggestedDistortion2 = suggestedDistortion2;
     }
 }

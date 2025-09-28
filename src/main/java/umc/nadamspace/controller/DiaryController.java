@@ -5,6 +5,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import umc.nadamspace.dto.ApiResponse;
+import umc.nadamspace.dto.DiaryAnalysisResponseDTO;
 import umc.nadamspace.dto.DiaryRequestDTO;
 import umc.nadamspace.dto.DiaryResponseDTO;
 import umc.nadamspace.service.DiaryService;
@@ -96,4 +97,34 @@ public class DiaryController {
 
         return ApiResponse.onSuccess("일기가 삭제되었습니다.");
     }
+
+    /**
+     * 가이드형 일기 작성 API
+     * [POST] /api/diaries/guideform
+     */
+    @PostMapping("/guideform")
+    public ApiResponse<Long> createGuideformDiary(
+            @RequestBody DiaryRequestDTO.CreateGuideformDTO request,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        Long currentUserId = Long.valueOf(userDetails.getUsername());
+        Long newDiaryId = diaryService.createGuideformDiary(currentUserId, request);
+
+        return ApiResponse.onSuccess(newDiaryId);
+    }
+
+    /**
+     * 일기 분석 결과 조회 API
+     * [GET] /api/diaries/{diaryId}/analysis
+     */
+    @GetMapping("/{diaryId}/analysis")
+    public ApiResponse<DiaryAnalysisResponseDTO> getDiaryAnalysis(
+            @PathVariable("diaryId") Long diaryId) {
+
+        // TODO: 현재 로그인한 사용자가 해당 일기의 주인인지 확인하는 로직 추가하면 좋음
+
+        DiaryAnalysisResponseDTO analysisResponse = diaryService.getDiaryAnalysis(diaryId);
+        return ApiResponse.onSuccess(analysisResponse);
+    }
 }
+
