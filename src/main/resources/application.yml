@@ -3,7 +3,7 @@ server:
 
 
 jwt:
-  secret: VmYq3t6w9z$C&F)J@NcRfUjXn2r5u7x!A%D*G-KaPdSgVkYp3s6v9y/B?E(H+MbQ
+  secret: dW1jLW5hZGFtc3BhY2UtcHJvamVjdC1zcHJpbmctYm9vdC1qd3Qtc2VjcmV0LWtleS1mb3ItZGlhcnktYXBwbGljYXRpb24K
 
 
 spring:
