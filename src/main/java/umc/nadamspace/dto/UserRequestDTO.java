@@ -1,5 +1,6 @@
 package umc.nadamspace.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import umc.nadamspace.domain.enums.Gender;
 
@@ -8,6 +9,7 @@ public class UserRequestDTO {
 
     //회원가입
     @Getter
+    @AllArgsConstructor
     public static class SignUpDTO {
         private String email;
         private String password;

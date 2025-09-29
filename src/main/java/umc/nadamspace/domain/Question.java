@@ -15,9 +15,12 @@ public class Question {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "question_id")
     private Long id;
 
-    private int order;
+
+    @Column(name = "question_order",  nullable = false)
+    private Integer order;
 
     @Lob
     private String questionBody;

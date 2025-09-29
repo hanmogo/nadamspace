@@ -24,7 +24,7 @@ public class MonthlySummary extends BaseEntity {
     private User user;
 
     // 요약 대상 년월 (ex : "2025-09")
-    @Column(nullable = false, length = 7)
+    @Column(name = "summary_year_month", nullable = false, length = 7)
     private String yearMonth;
 
     // 해당 월에 작성한 총 일기 수
