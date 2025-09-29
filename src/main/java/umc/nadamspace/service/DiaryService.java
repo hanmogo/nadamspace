@@ -300,9 +300,17 @@ public class DiaryService {
         return null;
     }
 
-    public DiaryAnalysisResponseDTO getDiaryAnalysis(Long diaryId) {
+    public DiaryAnalysisResponseDTO getDiaryAnalysis(Long userId, Long diaryId) {
+        // 1. diaryId로 분석 결과를 조회합니다.
         DiaryAnalysis analysis = diaryAnalysisRepository.findByDiaryId(diaryId)
                 .orElseThrow(() -> new IllegalArgumentException("해당 일기에 대한 분석 결과를 찾을 수 없습니다."));
+
+        // 2. (핵심) 조회된 분석 결과가 현재 로그인한 사용자의 일기가 맞는지 확인합니다.
+        if (!analysis.getDiary().getUser().getId().equals(userId)) {
+            throw new SecurityException("해당 분석을 조회할 권한이 없습니다.");
+        }
+
+        // 3. 권한이 확인되면 DTO로 변환하여 반환합니다.
         return DiaryAnalysisResponseDTO.from(analysis);
     }
 }

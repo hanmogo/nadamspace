@@ -10,6 +10,9 @@ import umc.nadamspace.dto.TokenDTO;
 import umc.nadamspace.dto.UserRequestDTO;
 import umc.nadamspace.repository.UserRepository;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -27,10 +30,19 @@ public class AuthService {
         // 비밀번호 암호화
         String hashedPassword = passwordEncoder.encode(request.getPassword());
 
+        // 날짜 형식을 지정합니다
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+
+        // DTO에서 받은 생년월일 문자열을 LocalDate 객체로 변환합니다.
+        LocalDate birthdate = LocalDate.parse(request.getBirthdate(), formatter);
+
         User newUser = User.builder()
                 .name(request.getName())
                 .email(request.getEmail())
                 .password(hashedPassword)
+                .phoneNum(request.getPhoneNumber())
+                .birthdate(birthdate)
+                .gender(request.getGender())
                 .build();
 
         return userRepository.save(newUser).getId();

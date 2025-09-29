@@ -119,11 +119,13 @@ public class DiaryController {
      */
     @GetMapping("/{diaryId}/analysis")
     public ApiResponse<DiaryAnalysisResponseDTO> getDiaryAnalysis(
-            @PathVariable("diaryId") Long diaryId) {
+            @PathVariable("diaryId") Long diaryId,
+            @AuthenticationPrincipal UserDetails userDetails) {
 
-        // TODO: 현재 로그인한 사용자가 해당 일기의 주인인지 확인하는 로직 추가하면 좋음
+        Long currentUserId = Long.valueOf(userDetails.getUsername());
 
-        DiaryAnalysisResponseDTO analysisResponse = diaryService.getDiaryAnalysis(diaryId);
+        // Service 계층에 diaryId와 userId를 함께 넘겨 권한 검증을 위임
+        DiaryAnalysisResponseDTO analysisResponse = diaryService.getDiaryAnalysis(currentUserId, diaryId);
         return ApiResponse.onSuccess(analysisResponse);
     }
 }

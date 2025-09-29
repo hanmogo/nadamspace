@@ -21,6 +21,7 @@ public class UserRequestDTO {
 
     //로그인
     @Getter
+    @AllArgsConstructor
     public static class LoginDTO {
         private String email;
         private String password;
