@@ -35,6 +35,7 @@ public class User extends BaseEntity {
     @Column(nullable = false)
     private String password;
 
+    @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private Gender gender;
 
@@ -43,9 +44,11 @@ public class User extends BaseEntity {
     private State state;
 
 
-    @Column(unique = true)
+
+    @Column(unique = true, nullable = false)
     private String phoneNum;
 
+    @Column(nullable = false)
     private LocalDate birthdate;
 
     private LocalDateTime inactive_date;
