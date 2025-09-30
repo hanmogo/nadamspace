@@ -2,6 +2,7 @@ package umc.nadamspace.dto;
 
 import lombok.Builder;
 import lombok.Getter;
+import umc.nadamspace.domain.Answer;
 import umc.nadamspace.domain.Diary;
 
 import java.time.LocalDate;
@@ -60,5 +61,48 @@ public class DiaryResponseDTO {
         }
     }
 
+    // 가이드형 일기 상세 조회 응답 DTO
+    @Getter
+    @Builder
+    public static class GuidedDiaryDetailDTO {
+        private Long diaryId;
+        private LocalDateTime createdAt;
+        private List<AnswerResponseDTO> answers;
 
+        public static GuidedDiaryDetailDTO from(Diary diary) {
+            List<AnswerResponseDTO> answerDTOs = diary.getAnswers().stream()
+                    .map(AnswerResponseDTO::from)
+                    .collect(Collectors.toList());
+
+            return GuidedDiaryDetailDTO.builder()
+                    .diaryId(diary.getId())
+                    .createdAt(diary.getCreatedAt())
+                    .answers(answerDTOs)
+                    .build();
+        }
+    }
+
+    // Answer의 내용을 담을 내부 DTO
+    @Getter
+    @Builder
+    public static class AnswerResponseDTO {
+        private String question;
+        private String answerBody;
+        private List<String> keywords;
+
+        public static AnswerResponseDTO from(Answer answer) {
+            List<String> keywordContents = answer.getAnswerKeywords().stream()
+                    .map(answerKeyword -> answerKeyword.getKeyword().getContent())
+                    .collect(Collectors.toList());
+
+            return AnswerResponseDTO.builder()
+                    .question(answer.getQuestion().getQuestionBody())
+                    .answerBody(answer.getAnswerBody())
+                    .keywords(keywordContents)
+                    .build();
+        }
+    }
 }
+
+
+

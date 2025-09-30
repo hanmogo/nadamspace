@@ -5,7 +5,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import umc.nadamspace.domain.*;
+import umc.nadamspace.domain.common.GeneralException;
 import umc.nadamspace.domain.enums.DiaryType;
+import umc.nadamspace.domain.enums.ErrorCode;
 import umc.nadamspace.domain.mapping.AnswerKeyword;
 import umc.nadamspace.domain.mapping.DiaryEmotion;
 import umc.nadamspace.domain.mapping.DiaryTag;
@@ -312,5 +314,18 @@ public class DiaryService {
 
         // 3. 권한이 확인되면 DTO로 변환하여 반환합니다.
         return DiaryAnalysisResponseDTO.from(analysis);
+    }
+
+    //guide형 일기 정보 조회
+    public DiaryResponseDTO.GuidedDiaryDetailDTO getGuidedDiaryDetail(Long userId, Long diaryId) {
+        Diary diary = diaryRepository.findById(diaryId)
+                .orElseThrow(() -> new GeneralException(ErrorCode.DIARY_NOT_FOUND));
+
+        if (!diary.getUser().getId().equals(userId)) {
+            throw new GeneralException(ErrorCode.DIARY_UNAUTHORIZED);
+        }
+
+        // fetch join으로 Answer와 Question, Keyword까지 한번에 가져오는 쿼리를 작성하면 성능이 더 좋습니다.
+        return DiaryResponseDTO.GuidedDiaryDetailDTO.from(diary);
     }
 }

@@ -128,5 +128,19 @@ public class DiaryController {
         DiaryAnalysisResponseDTO analysisResponse = diaryService.getDiaryAnalysis(currentUserId, diaryId);
         return ApiResponse.onSuccess(analysisResponse);
     }
+
+    /**
+     * 가이드형 일기 정보 조회 API
+     * [GET] /api/diaries/guideform/{diaryId}
+     */
+
+    @GetMapping("/guideform/{diaryId}")
+    public ApiResponse<DiaryResponseDTO.GuidedDiaryDetailDTO> getGuidedDiaryDetail(
+            @PathVariable Long diaryId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        Long currentUserId = Long.valueOf(userDetails.getUsername());
+        return ApiResponse.onSuccess(diaryService.getGuidedDiaryDetail(currentUserId, diaryId));
+    }
 }
 
