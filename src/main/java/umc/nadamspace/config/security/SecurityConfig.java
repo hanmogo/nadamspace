@@ -28,7 +28,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/","/api/auth/signup", "/api/auth/login","/swagger-ui/**","/v3/api-docs/**").permitAll()
+                        .requestMatchers("/","/api/auth/signup", "/api/auth/login","/swagger-ui/**","/v3/api-docs/**", "/swagger-ui.yaml").permitAll()
                         .anyRequest().authenticated())
 
                 // 직접 만든 JwtAuthenticationFilter를 UsernamePasswordAuthenticationFilter 앞에 추가

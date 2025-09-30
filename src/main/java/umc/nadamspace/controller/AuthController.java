@@ -25,9 +25,9 @@ public class AuthController {
 
     @PostMapping("/login")
     public ApiResponse<TokenDTO> login(@RequestBody UserRequestDTO.LoginDTO request) {
-        if (true) {
-            throw new RuntimeException("===== 강제 에러 테스트 =====");
-        }
+//        if (true) {
+//            throw new RuntimeException("===== 강제 에러 테스트 =====");
+//        }
         TokenDTO token = authService.login(request);
         return ApiResponse.onSuccess(token);
     }
