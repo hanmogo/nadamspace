@@ -1,6 +1,7 @@
 package umc.nadamspace.domain;
 
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -53,6 +54,7 @@ public class User extends BaseEntity {
 
     private LocalDateTime inactive_date;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<Diary> diaries = new ArrayList<>();
 
