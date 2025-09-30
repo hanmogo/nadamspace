@@ -69,4 +69,20 @@ public class User extends BaseEntity {
         this.birthdate = birthdate;
         this.inactive_date = inactive_date;
     }
+
+    //-- 비즈니스 로직 --
+
+    /**
+     * 내 정보 수정 API [PATCH /api/users/me]
+     */
+    public void updateProfile(String name) {
+        this.name = name;
+    }
+
+    /**
+     * 비밀번호 변경 API [PATCH /api/users/me/password]
+     */
+    public void changePassword(String newPassword) {
+        this.password = newPassword;
+    }
 }

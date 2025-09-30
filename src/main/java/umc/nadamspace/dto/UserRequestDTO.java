@@ -26,4 +26,16 @@ public class UserRequestDTO {
         private String email;
         private String password;
     }
+
+    @Getter
+    public static class ChangePasswordDTO {
+        private String currentPassword;
+        private String newPassword;
+    }
+
+    @Getter
+    public static class UpdateProfileDTO {
+        private String name;
+        private String email;
+    }
 }
